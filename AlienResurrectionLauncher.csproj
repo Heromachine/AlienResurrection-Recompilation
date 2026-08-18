@@ -1,0 +1,32 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <TargetFramework>net10.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+    <AssemblyName>AlienResurrectionLauncher</AssemblyName>
+  </PropertyGroup>
+
+  <!-- Local path reference: Repo A (the RecompOne engine fork) isn't pushed anywhere yet, so this
+       is the only workable dependency for now. Swap for a real package/submodule reference once
+       Repo A has a public URL. Tracked as follow up, not blocking. -->
+  <ItemGroup>
+    <ProjectReference Include="../RecompOne-fork/RecompOne.Runtime/RecompOne.Runtime.csproj" />
+    <ProjectReference Include="../RecompOne-fork/RecompOne.Recompiler/RecompOne.Recompiler.csproj" />
+  </ItemGroup>
+
+  <!-- Roslyn comes in transitively via RecompOne.Runtime (it already uses
+       Microsoft.CodeAnalysis.CSharp for the mod system), so no separate package reference is
+       needed here. The in-process build step reuses that same dependency. -->
+
+  <!-- GameTemplate/*.cs are template ASSETS materialized into game/ at runtime, not launcher code.
+       Exclude them from the SDK's default **/*.cs compile glob, which would otherwise try to
+       build GameTemplate/Program.cs's own top-level statements into this project too. -->
+  <ItemGroup>
+    <Compile Remove="GameTemplate/**/*.cs" />
+    <None Include="assets/**" CopyToOutputDirectory="PreserveNewest" />
+    <None Include="GameTemplate/**" CopyToOutputDirectory="PreserveNewest" />
+  </ItemGroup>
+
+</Project>

@@ -1,0 +1,146 @@
+{
+  // RecompOne config — Alien Resurrection (USA)
+  // Serial SLUS-00633, boot exe cdrom:\SLUS_006.33;1 (read automatically from SYSTEM.CNF).
+  // The recompiler reads SYSTEM.CNF + the PS-EXE straight from the disc, so elf/map/funcMap
+  // are OPTIONAL — omitting them makes it auto-scan for functions. Add a funcMap later for
+  // better/cleaner output (see notes at the bottom).
+  //
+  // Run from anywhere:
+  //   dotnet <RecompOne-fork>/RecompOne.Recompiler/bin/Release/net10.0/recompone.dll \
+  //          assets/config.json
+
+  "game": {
+    "id": "SLUS-00633",
+    "name": "Alien Resurrection",
+    "output": "./Recompiled"          // resolved relative to this config; generated C# lands here
+  },
+
+  // Disc image. Multi-track: Track 1 = MODE2/2352 data, Tracks 2-4 = CD audio.
+  // Path is absolute so the config works no matter where you invoke it from.
+  "cue": "Alien Resurrection (USA).cue",
+
+  // ---- Symbol sources (all optional; leave off for a pure auto-scan first pass) ----
+  // "elf":     null,   // deprecated in favor of map/funcMap
+  // "map":     null,   // linker .map if you have one
+  // "funcMap": "./funcs.json",   // generate with: recompone --generate-function-file -elf <elf> -map <map> -out funcs.json
+
+  // "main": "800XXXXX",   // optional entry-point override (hex). Not needed — InitialPC comes from the PS-EXE.
+
+  // Linear sweep finds functions the symbols miss, but WILL misread some data as code.
+  // Enabled 2026-07-24: boot crashed on unmapped call 0x0001B4BC, which sits in a gap
+  // between two already-detected main-exe functions (0x1B2F0-0x1B568) -- an
+  // indirectly-called function the scanner missed, not an overlay.
+  "linearSweep": true,
+
+  "debug": false,
+
+  // Overlays: PS1 games swap code/data into the same RAM region. Alien Resurrection very
+  // likely uses them, but each must be defined by hand (name/base/lba/size or file).
+  // Start empty; add entries once you know the overlay layout. See the wiki for the format.
+  //
+  // Added 2026-07-24: the boot EXE (SLUS_006.33, the "main" block above) turned out to be
+  // just a small bootstrap -- once its CD-ROM/interrupt code actually worked end to end
+  // (see the runtime task history), it reads and jumps to a SECOND, much bigger executable,
+  // cdrom:\ALIEN.BIN;1 (0x98800 bytes, ~624KB, vs. main's couple hundred functions), via
+  // BIOS LoadExec. This is the real game code. "file" lets an overlay pull an arbitrary
+  // disc file directly rather than requiring lba+size -- exactly what's needed here.
+  // offset=2048 (0x800) skips the standard PS-EXE file header (magic/pc0/gp0/segment sizes)
+  // so byte 0 of the overlay is the first real instruction; base=00010100 matches the
+  // header's own t_addr (where the game loads its text segment), read directly from the
+  // file with od/hexdump. This deliberately overlaps main's own 0x10000-range addresses --
+  // that's correct: main's job is done by the time ALIEN.BIN runs, and Dispatcher.Load
+  // just overwrites main's function-table entries with alien's at the same addresses.
+  // Entry point 0008656C force-declared (also from the header) since there's nothing yet
+  // calling it from within this overlay's own scanned code to discover it automatically.
+  "overlays": [
+    {
+      "name": "alien",
+      "file": "\\ALIEN.BIN;1",
+      "offset": 2048,
+      "base": "00010100",
+      "linearSweep": true,
+      "functions": [
+        { "address": "0008656C" },
+        // 6-entry function-pointer jump table at 0x000A26C4, dispatched by func_00043208
+        // (A0 = ReadU32(0xA26C4 + idx*4); Call(A0), idx 0..5). Entries: 0x43410, 0x433A0,
+        // 0x43390, 0x43358, 0x43348, 0x43314 -- read straight out of ALIEN.BIN's data. Three
+        // (0x43410/0x43358/0x43314) were already recovered; the other three land in gaps
+        // between them that the scanner/linearSweep/data-pointer pass missed (their function
+        // slices get truncated by an adjacent entry, so the pass's ends-in-return check
+        // rejected them), so force-declare them. Crash was: unmapped call 0x00043348 during
+        // the menu.
+        { "address": "000433A0" },
+        { "address": "00043390" },
+        { "address": "00043348" }
+      ]
+    }
+  ],
+
+  // Force-declare functions the scanner misses: { "address": "80010000", "name": "SomeFunc" }
+  // Added 2026-07-24: func_0001B6D0 (CD command dispatcher, called from CD_init) reads a
+  // 5-entry function-pointer table out of RAM at 0x00020468 and calls through it -- pure
+  // data, invisible to both the static scanner and linearSweep. Dumped the table at runtime
+  // (temporary catch block in Program.cs) to get all 5 targets at once instead of
+  // whack-a-moling them one crash at a time. Same for func_00014340's 45-entry table at
+  // 0x0001FE70 (14 unique targets).
+  //
+  // Also added 2026-07-24: a batch found by grepping the generated main.cs for
+  // `Dispatcher.Call(c, m, 0x...)` call sites with a literal constant address (i.e. jalr
+  // through a register loaded from an immediate) that DiscoverCalls' direct-jal-only
+  // heuristic doesn't follow, cross-referenced against already-defined func_ addresses.
+  // These are genuine compiler-emitted call targets (not sweep guesses), so high confidence
+  // even for the ones at 0x00023xxx-0x00026xxx, well past the 0x10000-0x20000 range seen
+  // so far -- worth double-checking those still decode sanely if anything looks off later.
+  "functions": [
+    { "address": "0001B934" },
+    { "address": "0001BA34" },
+    { "address": "0001BA80" },
+    { "address": "0001BB00" },
+    { "address": "0001BB80" },
+    { "address": "0001461C" },
+    { "address": "00014AC8" },
+    { "address": "000148D4" },
+    { "address": "000149E8" },
+    { "address": "00014648" },
+    { "address": "00014604" },
+    { "address": "00014610" },
+    { "address": "00014A94" },
+    { "address": "000147C0" },
+    { "address": "000148C0" },
+    { "address": "00014A08" },
+    { "address": "000146A0" },
+    { "address": "000148E0" },
+    { "address": "00010158" },
+    { "address": "000101E8" },
+    { "address": "000103B4" },
+    { "address": "000104B4" },
+    { "address": "000104D0" },
+    { "address": "000104FC" },
+    { "address": "000143A8" },
+    { "address": "000145E0" },
+    { "address": "00023B48" },
+    { "address": "00023DE8" },
+    { "address": "00023DFC" },
+    { "address": "00023E10" },
+    { "address": "00023EB4" },
+    { "address": "00025AB4" },
+    { "address": "00025ABC" },
+    { "address": "00025AC4" },
+    { "address": "00025ACC" },
+    { "address": "00025AD4" },
+    { "address": "00025ADC" },
+    { "address": "00025AE4" },
+    { "address": "00025AEC" },
+    { "address": "00026AE4" }
+  ],
+
+  // Replace a function with an empty stub (e.g. broken/irrelevant funcs): ["FUNC_80010000"]
+  "stubs": [],
+
+  // Skip these functions entirely during codegen: ["FUNC_80010000"]
+  "ignored": [],
+
+  // Base-mod patches that replace a recompiled function with your own C# method.
+  // { "address": "800553C4", "name": "MyMod.MyClass.MyMethod" }
+  "patches": []
+}

@@ -1,0 +1,11 @@
+bin/
+obj/
+
+# Everything generated/downloaded at runtime. This is the entire reason this repo exists in this
+# shape: no game-derived code is ever committed. game/Recompiled/*.cs is regenerated from each
+# user's own disc on first run; nothing under game/ should ever be tracked.
+game/
+settings.json
+interface.ini
+*.sav
+*.sav.bak*
