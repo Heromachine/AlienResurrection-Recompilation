@@ -8,12 +8,17 @@
     <AssemblyName>AlienResurrectionLauncher</AssemblyName>
   </PropertyGroup>
 
-  <!-- Local path reference: Repo A (the RecompOne engine fork) isn't pushed anywhere yet, so this
-       is the only workable dependency for now. Swap for a real package/submodule reference once
-       Repo A has a public URL. Tracked as follow up, not blocking. -->
+  <!-- RELATIVE, not absolute. The engine fork is a separate repository; this expects it checked out
+       as a SIBLING directory (../RecompOne-fork). An absolute path worked on the machine it was
+       written on and nowhere else, so anyone cloning this repo could not build it at all. Override
+       with the RecompOneDir property if your checkout lives elsewhere. Swap for a package or
+       submodule reference once the fork has a public URL. -->
+  <PropertyGroup>
+    <RecompOneDir Condition="'$(RecompOneDir)' == ''">$(MSBuildThisFileDirectory)../RecompOne-fork</RecompOneDir>
+  </PropertyGroup>
   <ItemGroup>
-    <ProjectReference Include="../RecompOne-fork/RecompOne.Runtime/RecompOne.Runtime.csproj" />
-    <ProjectReference Include="../RecompOne-fork/RecompOne.Recompiler/RecompOne.Recompiler.csproj" />
+    <ProjectReference Include="$(RecompOneDir)/RecompOne.Runtime/RecompOne.Runtime.csproj" />
+    <ProjectReference Include="$(RecompOneDir)/RecompOne.Recompiler/RecompOne.Recompiler.csproj" />
   </ItemGroup>
 
   <!-- Roslyn comes in transitively via RecompOne.Runtime (it already uses
