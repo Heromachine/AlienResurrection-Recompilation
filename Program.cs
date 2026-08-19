@@ -70,6 +70,24 @@ int RunLauncher()
     string stampFile = Path.Combine(gameDir, ".stamp");
     string builtDllPath = Path.Combine(gameDir, "AlienResurrection.dll");
 
+    // ---- Step 0: optional display font, user-supplied ----------------------------------------
+    // The "Alien Resurrection" display font is Free for Personal Use and carries no redistribution
+    // grant, so it is NOT shipped -- publishing it would have this repo's own licence promise rights
+    // over someone else's work. Same answer as the disc and the BIOS: the user supplies it. Drop
+    // "Alien Resurrection.ttf" beside the executable or in the save/user-data folder and the title
+    // uses it; otherwise everything falls back to the default face and simply looks plainer.
+    // Must be set before Initialize -- ImGui builds its font atlas inside that call.
+    foreach (var candidate in new[]
+             {
+                 Path.Combine(RecompOne.Runtime.Storage.UserData.Dir, "Alien Resurrection.ttf"),
+                 Path.Combine(AppContext.BaseDirectory, "Alien Resurrection.ttf"),
+             })
+    {
+        if (!File.Exists(candidate)) continue;
+        RecompOne.Runtime.Host.Window.HostFonts.DisplayFontPath = candidate;
+        break;
+    }
+
     // ---- Step 1: get a valid disc + resolve BIOS, reusing the engine's own pickers -------------
     RecompOne.Runtime.Runtime.Initialize("Alien Resurrection Launcher");
     RecompOne.Runtime.Runtime.WaitForValidDisc(); // blocks with the disc picker until CdPath is valid
@@ -97,6 +115,41 @@ int RunLauncher()
             return 1;
         }
         Console.WriteLine($"[launcher] disc OK: {sysCfg.BootExe}");
+    }
+
+    // ---- Step 2b: front screen ---------------------------------------------------------------
+    // Deliberately AFTER the disc and save location are settled and BEFORE any recompile: a first
+    // run should not open on a build log. Play falls through to the cache check below; Exit leaves
+    // without touching the game directory at all.
+    var splash = new AlienResurrectionLauncher.SplashScreen();
+    RecompOne.Runtime.Host.Window.PanelManager.Register(splash);
+
+    // Pad/keyboard navigation for OUR menu only. Turned off again the moment the choice is made,
+    // before the guest ever runs -- from that point the pad belongs to the emulated PlayStation
+    // controller and ImGui must not also be consuming it. See HostNav.
+    RecompOne.Runtime.Host.Window.HostNav.UiNavigation = true;
+    try
+    {
+        // Paced deliberately. The window is created with VSync off and no frame cap (see
+        // HostWindow.Initialize), so an unpaced pump loop spins a core flat out -- measured at 64%
+        // of one CPU sitting on a static menu. That is tolerable for a build-progress loop lasting
+        // seconds; this screen can sit here for as long as someone reads the About page. ~8ms still
+        // gives well over 60fps, which is more than the radar animation needs.
+        while (splash.Choice == AlienResurrectionLauncher.SplashChoice.None)
+        {
+            RecompOne.Runtime.Runtime.Pump();
+            Thread.Sleep(8);
+        }
+    }
+    finally
+    {
+        RecompOne.Runtime.Host.Window.HostNav.UiNavigation = false;
+    }
+
+    if (splash.Choice == AlienResurrectionLauncher.SplashChoice.Exit)
+    {
+        Console.WriteLine("[launcher] exit chosen at the front screen");
+        return 0;
     }
 
     // ---- Step 3: cache check ---------------------------------------------------------------

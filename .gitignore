@@ -9,3 +9,9 @@ settings.json
 interface.ini
 *.sav
 *.sav.bak*
+
+# User-supplied display font. "Alien Resurrection.ttf" by Jens R. Ziehn is Free for Personal Use
+# and carries no redistribution grant, so it must never be committed -- the launcher looks for a
+# copy the user supplies themselves and falls back to the default face without one.
+*.ttf
+*.otf
