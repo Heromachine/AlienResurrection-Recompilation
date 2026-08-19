@@ -1,4 +1,6 @@
-# Alien Resurrection — Launcher
+# Alien Resurrection Recompilation
+
+**Version 0.1.0** — early, incomplete release. See known issues below.
 
 A launcher that turns **your own copy** of the PlayStation game *Alien Resurrection* into a native
 build that runs directly on your machine, using a fork of

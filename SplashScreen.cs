@@ -40,6 +40,10 @@ public sealed class SplashScreen : IPanel
     static string TitleBottom => HostFonts.Loaded ? "RESURRECTiON" : "RESURRECTION";
     const string Subtitle = "Recompilation";
 
+    // Kept in sync with AlienResurrectionLauncher.csproj's <Version> -- there is no build step that
+    // threads MSBuild's version into this string, so bump both together.
+    const string AppVersion = "0.1.0";
+
     // How far the second title line is pulled up toward the first, in pixels. Proportional to the
     // title size so the pairing survives a font-size change; raise it to tighten further.
     static float TitleLineTighten => (HostFonts.Title != null ? HostFonts.TitleSize : 20f) * 0.34f;
@@ -191,6 +195,7 @@ public sealed class SplashScreen : IPanel
         ImGui.PushStyleColor(ImGuiCol.Text, Accent);
         Centered("About Recompilation", w);
         ImGui.PopStyleColor();
+        Centered($"v{AppVersion}", w, dim: true);
         ImGui.Separator();
 
         if (ImGui.BeginChild("##creditsbody", new Vector2(0, ImGui.GetContentRegionAvail().Y - 60)))

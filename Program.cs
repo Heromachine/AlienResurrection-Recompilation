@@ -89,7 +89,9 @@ int RunLauncher()
     }
 
     // ---- Step 1: get a valid disc + resolve BIOS, reusing the engine's own pickers -------------
-    RecompOne.Runtime.Runtime.Initialize("Alien Resurrection Launcher");
+    string appVersion = Assembly.GetExecutingAssembly()
+        .GetCustomAttribute<AssemblyInformationalVersionAttribute>()?.InformationalVersion ?? "dev";
+    RecompOne.Runtime.Runtime.Initialize($"Alien Resurrection Recompilation v{appVersion}");
     RecompOne.Runtime.Runtime.WaitForValidDisc(); // blocks with the disc picker until CdPath is valid
     RecompOne.Runtime.Runtime.WaitForBiosResolution(); // the disc and BIOS prompts are sequenced
                                                         // (never shown in the same frame), so
