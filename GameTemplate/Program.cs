@@ -7,6 +7,11 @@
 using RecompOne.Runtime.Memory;
 using Recompiled;
 
+// Matches the launcher's own setting. The launcher normally invokes Recompiled.Entry.Run directly
+// in-process, so this Main is not the usual entry path -- but if this assembly is ever run on its
+// own, the cards must resolve to the same per-user directory rather than to the CWD.
+RecompOne.Runtime.Storage.UserData.AppId = "AlienResurrection";
+
 if (Environment.GetEnvironmentVariable("INTERP_SELFTEST") == "1")
 {
     RecompOne.Runtime.Dispatch.MipsInterp.SelfTest();

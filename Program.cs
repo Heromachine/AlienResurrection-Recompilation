@@ -38,6 +38,12 @@ using RecompOne.Runtime.Memory;
 if (string.IsNullOrEmpty(Environment.GetEnvironmentVariable("CHAIN_IRQ")))
     Environment.SetEnvironmentVariable("CHAIN_IRQ", "1");
 
+// Namespaces this game's writable state (memory cards) under its own per-user data directory
+// rather than letting it land in whatever directory the process happened to start in. Must be set
+// before anything reads Runtime.CardA/CardB, which resolve their paths on first access and cache
+// them -- hence here, next to CHAIN_IRQ, rather than further into the launcher flow.
+RecompOne.Runtime.Storage.UserData.AppId = "AlienResurrection";
+
 // The window/GL context and audio context are thread-affine, and gameplay's recompiled call chains
 // need a deep stack (RecompOne translates every MIPS call into a real C# call) -- the same reason
 // GameTemplate/Program.cs runs the game on a dedicated 64MB-stack thread. Running the ENTIRE
