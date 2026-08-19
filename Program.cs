@@ -19,6 +19,25 @@ using RecompOne.Runtime.Cdrom;
 using RecompOne.Runtime.Config;
 using RecompOne.Runtime.Memory;
 
+// CHAIN_IRQ=1 IS MANDATORY FOR THIS GAME -- without it the controller does not work at all.
+// Interrupts.cs defaults ChainMode to 0 (HLE only: handlers are called out of the BIOS IntrEnv
+// table, and the SysEnqIntRP chain is never walked). Alien Resurrection drives its pad through its
+// OWN SIO0 driver hung off that chain -- not LibPad, not the BIOS pad -- so with the chain unwalked
+// its handler never runs, SIO0 exchanges zero bytes, and the game flashes "No Controller in
+// Controller Port 1" forever. The keyboard dies with it, since both feed through that same ISR.
+// Measured 2026-08-18 on identical builds: chain unwalked -> verifierCalls=0, SIO0 TXbytes=0, no
+// input; CHAIN_IRQ=1 -> verifierCalls=201, TXbytes=3559, pad works. This is set here rather than by
+// flipping the engine default because that default guards other titles (see the CHAIN_DELAY=600
+// note in Interrupts.cs: walking the chain during early init hangs this game's boot at CD_init),
+// and one title's evidence should not change it for every game.
+//
+// It must be set BEFORE anything touches Interrupts, whose ChainMode is a `static readonly` read
+// once at type-initialization time -- setting it later would be silently ignored. Hence: first
+// statement in the process, ahead of even the launcher thread. An explicit value from the
+// environment still wins, so a deliberate CHAIN_IRQ=0 run for A/B testing keeps working.
+if (string.IsNullOrEmpty(Environment.GetEnvironmentVariable("CHAIN_IRQ")))
+    Environment.SetEnvironmentVariable("CHAIN_IRQ", "1");
+
 // The window/GL context and audio context are thread-affine, and gameplay's recompiled call chains
 // need a deep stack (RecompOne translates every MIPS call into a real C# call) -- the same reason
 // GameTemplate/Program.cs runs the game on a dedicated 64MB-stack thread. Running the ENTIRE
