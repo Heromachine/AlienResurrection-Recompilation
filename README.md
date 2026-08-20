@@ -38,14 +38,34 @@ You will need:
 
 - **Your own copy of Alien Resurrection (USA), serial SLUS-00633**, as a `.cue` + `.bin` disc image.
   The launcher checks the disc's boot executable and refuses anything else.
-- **The .NET 10 runtime.**
 - A **PlayStation BIOS is optional.** The engine is HLE and services BIOS calls itself; the game runs
   fine without one. If you have your own dump you can point at it under Settings → BIOS.
 
 The disc stays required at runtime, not just at setup — this is not a "convert once and discard"
 tool.
 
-## Building
+## Download (Linux)
+
+The easiest way to run this: download the **AppImage** from the latest
+[Release](../../releases/latest), mark it executable, and run it — no separate .NET install, no
+extracting a zip, no terminal required for normal use.
+
+```
+chmod +x AlienResurrectionRecompilation-*-x86_64.AppImage
+./AlienResurrectionRecompilation-*-x86_64.AppImage
+```
+
+Most file managers offer "Allow executing file as program" (or similar) under a right-click →
+Properties dialog, so even the `chmod` step doesn't have to happen in a terminal.
+
+The `.zip` on the same release page contains the same self-contained build as loose files, if you'd
+rather not use an AppImage for some reason (e.g. no FUSE available) — extract it and run
+`AlienResurrectionLauncher` directly.
+
+## Building from source
+
+If you'd rather build it yourself instead of using a Release download, you'll need **the .NET 10
+SDK** (the prebuilt downloads above are self-contained and need none of this).
 
 The engine lives in a **separate repository** and is expected as a sibling directory:
 
@@ -65,7 +85,7 @@ If your engine checkout is somewhere else, override the path:
 dotnet build -c Release -p:RecompOneDir=/path/to/RecompOne-fork
 ```
 
-## Running
+## Running (from a source build)
 
 Run the built executable from its output directory:
 
@@ -73,6 +93,9 @@ Run the built executable from its output directory:
 cd bin/Release/net10.0
 ./AlienResurrectionLauncher
 ```
+
+(If you downloaded the AppImage or the `.zip` instead of building from source, see
+[Download](#download-linux) above — this section is for a build produced by `dotnet build`.)
 
 On first run you will be asked for your disc. After that you get the front screen — **Play Game**,
 **About**, **Exit** — navigable with the mouse, the keyboard, or a gamepad. Play Game performs the
@@ -113,8 +136,13 @@ still looks intentional, just with different letterforms.
 
 ## Troubleshooting
 
-**"You must install .NET to run this application."** — the runtime is not on your `PATH`. If you have
-a local install, set `DOTNET_ROOT` and `PATH` to point at it.
+**"You must install .NET to run this application."** — this only applies to a source build; the
+AppImage and `.zip` downloads are self-contained. For a source build, the runtime is not on your
+`PATH` — if you have a local install, set `DOTNET_ROOT` and `PATH` to point at it.
+
+**The AppImage won't run / mentions FUSE** — some minimal Linux installs don't ship `libfuse2`.
+Install it (e.g. `sudo apt install libfuse2t64` on recent Ubuntu, package name varies by distro), or
+run the AppImage with `--appimage-extract-and-run` as a fallback that doesn't need FUSE at all.
 
 **"This disc's boot executable is … expected SLUS_006.33"** — that image is not Alien Resurrection
 (USA). Other regions are not supported.

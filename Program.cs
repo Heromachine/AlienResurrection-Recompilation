@@ -65,7 +65,13 @@ int RunLauncher()
 {
     const string ExpectedBootExe = "SLUS_006.33";
     string launcherDir = AppContext.BaseDirectory;
-    string gameDir = Path.Combine(launcherDir, "game");
+    // NOT launcherDir. AppContext.BaseDirectory is read-only when running from an AppImage (a
+    // mounted SquashFS image), so recompiling into "<launcherDir>/game" throws
+    // System.IO.IOException: Read-only file system the first time anyone clicks Play. UserData.Dir
+    // is the same per-user writable directory already used for memory cards and the display font,
+    // for exactly the reason its own doc comment gives: writable state does not belong next to the
+    // executable.
+    string gameDir = Path.Combine(RecompOne.Runtime.Storage.UserData.Dir, "game");
     string recompiledDir = Path.Combine(gameDir, "Recompiled");
     string stampFile = Path.Combine(gameDir, ".stamp");
     string builtDllPath = Path.Combine(gameDir, "AlienResurrection.dll");

@@ -1,0 +1,7 @@
+[Desktop Entry]
+Type=Application
+Name=Alien Resurrection Recompilation
+Exec=AlienResurrectionLauncher
+Icon=AlienResurrectionRecompilation
+Categories=Game;
+Terminal=false

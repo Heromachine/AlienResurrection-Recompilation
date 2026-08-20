@@ -41,4 +41,14 @@
     <None Include="GameTemplate/**" CopyToOutputDirectory="PreserveNewest" />
   </ItemGroup>
 
+  <!-- publish/ (publish_release.py's output, including its AppDir staging copy of this project's
+       own output) is a subdirectory of the project root and would otherwise be picked up by the
+       SDK's default **/*.cs compile glob on the NEXT publish run. A stale copy of
+       GameTemplate/Program.cs sitting under publish/AppDir/usr/bin/GameTemplate/ from a prior
+       AppImage build collided with this project's own top-level statements (CS8802). bin/ and
+       obj/ are excluded by the SDK by default; publish/ is not. -->
+  <ItemGroup>
+    <Compile Remove="publish/**/*.cs" />
+  </ItemGroup>
+
 </Project>
