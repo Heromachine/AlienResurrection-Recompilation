@@ -37,8 +37,10 @@ C# rather than emulating it instruction by instruction.
 >   in-game load menu, because the loading-screen hang above blocked reaching it.
 > - **Crackling and popping in the CGI.** CD audio sectors were fed to the decoder about three times
 >   faster than the drive would deliver them, so the buffer wrapped and dropped samples.
-> - **Two correctness fixes** found by code review: the `LWL` instruction preserved the wrong bytes,
->   and a DMA channel could return without draining completions.
+> - **Two internal correctness fixes** from a code review, with no visible effect on play: an
+>   unaligned-load instruction preserved the wrong bytes on the emulated-BIOS path, and a DMA channel
+>   could return without draining completions. Neither is reachable by ordinary game code; they are
+>   listed for completeness, not as improvements you will notice.
 
 ## What this does and does not distribute
 
