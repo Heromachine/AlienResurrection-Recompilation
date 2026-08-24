@@ -8,6 +8,7 @@
   // Run from anywhere:
   //   dotnet <RecompOne-fork>/RecompOne.Recompiler/bin/Release/net10.0/recompone.dll \
   //          assets/config.json
+  //   ...with "cue" below pointing at your own disc image.
 
   "game": {
     "id": "SLUS-00633",
@@ -16,7 +17,10 @@
   },
 
   // Disc image. Multi-track: Track 1 = MODE2/2352 data, Tracks 2-4 = CD audio.
-  // Path is absolute so the config works no matter where you invoke it from.
+  //
+  // PLACEHOLDER ONLY -- a bare filename, deliberately not a real path. The launcher never reads this
+  // value: Program.cs overrides it at runtime with the disc the user picked ("config.Cue = discPath").
+  // It matters only for a standalone command-line recompile, where you point it at your own dump.
   "cue": "Alien Resurrection (USA).cue",
 
   // ---- Symbol sources (all optional; leave off for a pure auto-scan first pass) ----
