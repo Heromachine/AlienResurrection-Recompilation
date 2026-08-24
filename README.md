@@ -12,13 +12,17 @@ C# rather than emulating it instruction by instruction.
 > It is playable, but it is not finished, and you should expect to run into problems. Known issues in
 > this release:
 >
-> - **Progression** — some doors do not open even after the unlock registers, which can leave a level
->   unfinishable. Certain saves are affected more than others.
+> - **Loading screen hang** — the game can stop on the loading screen before the main menu, with the
+>   bar still empty. If it has not moved after a minute, restart it. This is the most likely problem
+>   you will hit, and it can happen on the first run.
+> - **Progression** — one door in the airlock section may not open, which can leave you stuck. The
+>   key-card and elevator doors this used to affect are fixed.
 > - **Freezes** — the game can stop responding during level transitions or loads. The window stays
 >   alive; the game itself stalls.
 > - **Graphics** — the main menu's 2D artwork is corrupted, the display can go black after loading a
 >   save, and leaving fullscreen may leave you with no menu.
-> - **Audio** — voice audio is missing from in-engine cutscenes.
+> - **Intro video** — on some machines the intro can crash the game shortly after starting. Seen on
+>   one machine during release testing; not yet understood.
 > - **Timing** — the game runs roughly 4% fast.
 > - **Settings** — do not enable native resolution; it hangs the game at boot.
 >
