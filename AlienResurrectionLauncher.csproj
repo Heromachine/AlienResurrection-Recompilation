@@ -8,7 +8,7 @@
     <AssemblyName>AlienResurrectionLauncher</AssemblyName>
     <!-- SemVer, pre-1.0: nothing here is stable yet (see README's known-issues list). Bump MINOR
          for each update; move to 1.0.0 once that list is empty. -->
-    <Version>0.1.0</Version>
+    <Version>0.2.0</Version>
     <!-- Without this, MSBuild appends "+<git-sha>" to AssemblyInformationalVersion, which is where
          the window title and About panel read the version from: fine for provenance, but it turns
          the title bar into "...v0.1.0+d4e67fa5374..." instead of "...v0.1.0". -->

@@ -1,6 +1,6 @@
 # Alien Resurrection Recompilation
 
-**Version 0.1.0** — early, incomplete release. See known issues below.
+**Version 0.2.0** — early, incomplete release. See known issues below.
 
 A launcher that turns **your own copy** of the PlayStation game *Alien Resurrection* into a native
 build that runs directly on your machine, using a fork of
@@ -27,6 +27,18 @@ C# rather than emulating it instruction by instruction.
 > - **Settings** — do not enable native resolution; it hangs the game at boot.
 >
 > Save often, and keep more than one save.
+
+> ### Fixed in 0.2.0
+>
+> - **Saved games are found again.** The game could report *no saved games* even with valid saves on
+>   the card. The card layer signalled completion by setting a status flag instead of calling the
+>   handler the game had registered, so the game waited forever and gave up. Note: this is confirmed
+>   at the engine level -- saves are enumerated and read -- but has not yet been seen listed in the
+>   in-game load menu, because the loading-screen hang above blocked reaching it.
+> - **Crackling and popping in the CGI.** CD audio sectors were fed to the decoder about three times
+>   faster than the drive would deliver them, so the buffer wrapped and dropped samples.
+> - **Two correctness fixes** found by code review: the `LWL` instruction preserved the wrong bytes,
+>   and a DMA channel could return without draining completions.
 
 ## What this does and does not distribute
 

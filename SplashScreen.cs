@@ -42,7 +42,7 @@ public sealed class SplashScreen : IPanel
 
     // Kept in sync with AlienResurrectionLauncher.csproj's <Version> -- there is no build step that
     // threads MSBuild's version into this string, so bump both together.
-    const string AppVersion = "0.1.0";
+    const string AppVersion = "0.2.0";
 
     // How far the second title line is pulled up toward the first, in pixels. Proportional to the
     // title size so the pairing survives a font-size change; raise it to tighten further.
