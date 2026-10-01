@@ -44,7 +44,7 @@ public sealed class SplashScreen : IPanel
 
     // Kept in sync with AlienResurrectionLauncher.csproj's <Version> -- there is no build step that
     // threads MSBuild's version into this string, so bump both together.
-    const string AppVersion = "0.2.0";
+    const string AppVersion = "0.3.0";
 
     // How far the second title line is pulled up toward the first, in pixels. Proportional to the
     // title size so the pairing survives a font-size change; raise it to tighten further.
@@ -214,14 +214,17 @@ public sealed class SplashScreen : IPanel
                 + "and you should expect to run into problems. Known issues at this release:");
             ImGui.PopStyleColor();
             ImGui.Spacing();
-            Item("Progression", "Some doors do not open even after the unlock registers, which can "
-                            + "leave a level unfinishable. Certain saves are affected more than others.");
-            Item("Freezes", "The game can stop responding during level transitions or loads. The "
-                            + "window stays alive; the game itself stalls.");
-            Item("Graphics", "The main menu's 2D artwork is corrupted, and the display can go black "
-                            + "after loading a save. Leaving fullscreen may leave you with no menu.");
+            Item("Progression", "One door in the airlock section may not open, which can leave you "
+                            + "stuck. The key-card and elevator doors are fixed.");
+            Item("Freezes", "Far rarer since 0.3.0, but a stall during a level transition has not "
+                            + "been ruled out. The window stays alive; restart if the game stops.");
+            Item("Menu artwork", "The main menu's logo and glow are often garbled. The art loads "
+                            + "correctly from the disc but is damaged before it is drawn; still being "
+                            + "tracked down. Gameplay is not affected.");
+            Item("Graphics", "The display can go black after loading a save. Leaving fullscreen may "
+                            + "leave you with no menu.");
             Item("Audio", "Voice audio is missing from in-engine cutscenes.");
-            Item("Timing", "The game runs roughly 4% fast.");
+            Item("Timing", "The attract demo and the scene behind the main menu run too fast.");
             Item("Settings", "Do not enable native resolution -- it hangs the game at boot.");
             ImGui.Spacing();
             ImGui.PushStyleColor(ImGuiCol.Text, Dim);

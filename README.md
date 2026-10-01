@@ -1,6 +1,6 @@
 # Alien Resurrection Recompilation
 
-**Version 0.2.0** — early, incomplete release. See known issues below.
+**Version 0.3.0** — early, incomplete release. See known issues below.
 
 A launcher that turns **your own copy** of the PlayStation game *Alien Resurrection* into a native
 build that runs directly on your machine, using a fork of
@@ -12,21 +12,41 @@ C# rather than emulating it instruction by instruction.
 > It is playable, but it is not finished, and you should expect to run into problems. Known issues in
 > this release:
 >
-> - **Loading screen hang** — the game can stop on the loading screen before the main menu, with the
->   bar still empty. If it has not moved after a minute, restart it. This is the most likely problem
->   you will hit, and it can happen on the first run.
 > - **Progression** — one door in the airlock section may not open, which can leave you stuck. The
 >   key-card and elevator doors this used to affect are fixed.
-> - **Freezes** — the game can stop responding during level transitions or loads. The window stays
->   alive; the game itself stalls.
-> - **Graphics** — the main menu's 2D artwork is corrupted, the display can go black after loading a
->   save, and leaving fullscreen may leave you with no menu.
+> - **Freezes** — far rarer since 0.3.0 (see below), but a stall during a level transition has not
+>   been ruled out. The window stays alive; restart if the game itself stops.
+> - **Main menu artwork** — the logo and its glow are often garbled. The art is loaded correctly
+>   from the disc but damaged in memory before it is drawn; the cause is still being tracked down.
+>   It does not affect gameplay.
+> - **Graphics** — the display can go black after loading a save, and leaving fullscreen may leave
+>   you with no menu.
 > - **Intro video** — on some machines the intro can crash the game shortly after starting. Seen on
 >   one machine during release testing; not yet understood.
-> - **Timing** — the game runs roughly 4% fast.
+> - **Timing** — the attract demo and the scene behind the main menu run too fast.
 > - **Settings** — do not enable native resolution; it hangs the game at boot.
 >
 > Save often, and keep more than one save.
+
+> ### New and fixed in 0.3.0
+>
+> - **Fixed: the loading-screen hang before the main menu**, and with it two more symptoms of the
+>   same bug -- the black screen when the main menu hands over to the attract demo, and the freeze a
+>   couple of seconds after loading a save. The emulated CD drive raised its first "sector ready"
+>   signal before it had seeked, while the game was still setting the read up, so the game's CD
+>   library treated an empty read as finished and waited forever for data it had stopped listening
+>   for. On the machine that showed it worst, 8 of 8 boots hung before the fix and none after.
+> - **Fixed: the picture drawn into a corner on scaled (HiDPI) displays.** On a Wayland desktop with
+>   fractional scaling, menus and game image filled only part of the window, and a tiled window
+>   looked cut off. The window now follows the display's real pixel size.
+> - **New: a Mods page** on the front screen, set before the game starts. God mode and infinite ammo
+>   (both off by default) switch on flags that belong to the original game's own cheat system, so
+>   they work in every level and every save. The flashlight can be made brighter, warmer, longer-
+>   reaching and steady, with a bigger or unlimited battery.
+> - **New: the first-run recompile** shows the front screen's motion tracker and the current step
+>   instead of a static message.
+> - **Saves load in game.** 0.2.0's card fix is now confirmed end to end: saves list and load in the
+>   in-game menu.
 
 > ### Fixed in 0.2.0
 >
@@ -34,7 +54,7 @@ C# rather than emulating it instruction by instruction.
 >   the card. The card layer signalled completion by setting a status flag instead of calling the
 >   handler the game had registered, so the game waited forever and gave up. Note: this is confirmed
 >   at the engine level -- saves are enumerated and read -- but has not yet been seen listed in the
->   in-game load menu, because the loading-screen hang above blocked reaching it.
+>   in-game load menu, because the loading-screen hang blocked reaching it (confirmed in 0.3.0).
 > - **Crackling and popping in the CGI.** CD audio sectors were fed to the decoder about three times
 >   faster than the drive would deliver them, so the buffer wrapped and dropped samples.
 > - **Two internal correctness fixes** from a code review, with no visible effect on play: an
