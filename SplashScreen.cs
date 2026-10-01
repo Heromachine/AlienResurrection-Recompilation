@@ -20,6 +20,8 @@ public sealed class SplashScreen : IPanel
     public SplashChoice Choice { get; private set; } = SplashChoice.None;
 
     bool _credits;
+    bool _mods;
+    ModSettings? _modSettings;   // loaded when the Mods page first opens, saved on Back
     bool _pendingOpen = true;
     readonly RadarBackground _radar = new();
     bool _focusPending = true;
@@ -121,6 +123,7 @@ public sealed class SplashScreen : IPanel
                         MathF.Min(vp.WorkSize.X, vp.WorkSize.Y) * 0.46f);
 
             if (_credits) DrawCredits();
+            else if (_mods) DrawMods();
             else DrawMenu();
         }
         ImGui.End();
@@ -177,6 +180,8 @@ public sealed class SplashScreen : IPanel
         // Where the focus rectangle starts, so a pad user has something selected on arrival rather
         // than having to press a direction first to find out anything is selectable.
         if (_focusPending) { ImGui.SetItemDefaultFocus(); _focusPending = false; }
+        ImGui.Dummy(new Vector2(0, 8));
+        if (CenteredButton("Mods", btn, w)) { _modSettings ??= ModSettings.Load(); _mods = true; }
         ImGui.Dummy(new Vector2(0, 8));
         if (CenteredButton("About", btn, w)) _credits = true;
         ImGui.Dummy(new Vector2(0, 8));
@@ -320,6 +325,98 @@ public sealed class SplashScreen : IPanel
         ImGui.TextWrapped(detail);
         ImGui.PopStyleColor();
         ImGui.Unindent();
+    }
+
+    // The Mods page: settings for the bundled game mods (bundled-mods/), chosen BEFORE the game
+    // starts. The engine compiles and loads mods at game start and each one reads mod-settings.json
+    // once then, so a change here applies from the next Play. That is why this lives on the front
+    // screen rather than in-game.
+    void DrawMods()
+    {
+        var s = _modSettings ??= ModSettings.Load();
+        var fl = s.Flashlight;
+
+        ImGui.Dummy(new Vector2(0, 12));
+        float w = ImGui.GetContentRegionAvail().X;
+        ImGui.PushStyleColor(ImGuiCol.Text, Accent);
+        Centered("Mods", w);
+        ImGui.PopStyleColor();
+        Centered("Applied when the game starts. Settings are saved when you go back.", w, dim: true);
+        ImGui.Separator();
+
+        // One readable column in the middle of the window rather than full width: a slider stretched
+        // across 1280px is hard to read and harder to set precisely.
+        float col = MathF.Min(620f, w - 40f);
+        float indent = MathF.Max(0f, (w - col) * 0.5f);
+
+        if (ImGui.BeginChild("##modsbody", new Vector2(0, ImGui.GetContentRegionAvail().Y - 60)))
+        {
+            ImGui.Indent(indent);
+            ImGui.PushItemWidth(col * 0.55f);
+
+            Section("Cheats");
+            bool god = s.GodMode, ammo = s.InfiniteAmmo;
+            if (ImGui.Checkbox("God mode", ref god)) s.GodMode = god;
+            Hint("The game's own invincibility flag: no damage, no health drain, no death.");
+            if (ImGui.Checkbox("Infinite ammo", ref ammo)) s.InfiniteAmmo = ammo;
+            Hint("Every ammo type you carry becomes unlimited, including ammo picked up later.");
+
+            Section("Lighting");
+            if (ImGui.RadioButton("Classic flashlight (tuned below)", s.Lighting != "modern")) s.Lighting = "classic";
+            ImGui.BeginDisabled();
+            ImGui.RadioButton("Modern lighting (coming later)", s.Lighting == "modern");
+            ImGui.EndDisabled();
+            Hint("Modern per-pixel lighting needs renderer work and is not available yet.");
+
+            Section("Flashlight");
+            bool en = fl.Enabled;
+            if (ImGui.Checkbox("Use these flashlight settings", ref en)) fl.Enabled = en;
+            Hint("Off = the original flashlight, untouched.");
+
+            ImGui.BeginDisabled(!fl.Enabled);
+            float bright = fl.Brightness * 100f;
+            if (ImGui.SliderFloat("Brightness", ref bright, 50f, 300f, "%.0f%%")) fl.Brightness = bright / 100f;
+            bool warm = fl.Warm;
+            if (ImGui.Checkbox("Warm colour", ref warm)) fl.Warm = warm;
+            Hint(fl.Warm ? "Warm, incandescent tint." : "Original cool blue-white tint.");
+            float reach = fl.Reach * 100f;
+            if (ImGui.SliderFloat("Reach", ref reach, 50f, 300f, "%.0f%%")) fl.Reach = reach / 100f;
+            bool flicker = fl.Flicker;
+            if (ImGui.Checkbox("Flicker", ref flicker)) fl.Flicker = flicker;
+            Hint(fl.Flicker ? "The original unsteady beam." : "A steady beam at full reach.");
+            bool unlimited = fl.UnlimitedBattery;
+            if (ImGui.Checkbox("Unlimited battery", ref unlimited)) fl.UnlimitedBattery = unlimited;
+            ImGui.BeginDisabled(fl.UnlimitedBattery);
+            float batt = fl.Battery;
+            if (ImGui.SliderFloat("Battery", ref batt, 1f, 10f, "x%.1f")) fl.Battery = batt;
+            ImGui.EndDisabled();
+            Hint("Battery capacity, as a multiple of the original.");
+            ImGui.EndDisabled();
+
+            ImGui.Dummy(new Vector2(0, 8));
+            if (ImGui.Button("Reset to defaults")) _modSettings = new ModSettings();
+
+            ImGui.PopItemWidth();
+            ImGui.Unindent(indent);
+        }
+        ImGui.EndChild();
+
+        ImGui.Separator();
+        if (CenteredButton("Back", new Vector2(160, 34), ImGui.GetContentRegionAvail().X))
+        {
+            _modSettings?.Save();
+            _mods = false;
+            _focusPending = true;
+        }
+    }
+
+    static void Hint(string text)
+    {
+        ImGui.PushStyleColor(ImGuiCol.Text, Dim);
+        ImGui.Indent(28f);
+        ImGui.TextWrapped(text);
+        ImGui.Unindent(28f);
+        ImGui.PopStyleColor();
     }
 
     static void Centered(string text, float width, bool dim = false)

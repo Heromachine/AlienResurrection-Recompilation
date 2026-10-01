@@ -19,3 +19,9 @@ interface.ini
 # copy the user supplies themselves and falls back to the default face without one.
 *.ttf
 *.otf
+
+# Video files (e.g. a film trailer kept here for a future "replace the intro" experiment, HeroLab
+# 97c66daf). Third-party footage: never committed, never shipped.
+*.mp4
+*.mkv
+*.webm

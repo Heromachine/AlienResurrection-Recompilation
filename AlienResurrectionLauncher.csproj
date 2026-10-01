@@ -51,4 +51,15 @@
     <Compile Remove="publish/**/*.cs" />
   </ItemGroup>
 
+  <!-- bundled-mods/ holds the game mods (god mode, infinite ammo, flashlight). They are compiled by
+       the ENGINE's mod loader at game start, NOT by this project, so they are excluded from the
+       default compile glob and copied into the output's mods/ folder instead. Each one reads its
+       on/off state and settings from mod-settings.json, which the launcher's Mods page writes, so
+       shipping them does not switch anything on. -->
+  <ItemGroup>
+    <Compile Remove="bundled-mods/**/*.cs" />
+    <None Include="bundled-mods/**" CopyToOutputDirectory="PreserveNewest"
+          Link="mods/%(RecursiveDir)%(Filename)%(Extension)" />
+  </ItemGroup>
+
 </Project>
