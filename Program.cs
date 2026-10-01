@@ -44,6 +44,8 @@ if (string.IsNullOrEmpty(Environment.GetEnvironmentVariable("CHAIN_IRQ")))
 // them -- hence here, next to CHAIN_IRQ, rather than further into the launcher flow.
 RecompOne.Runtime.Storage.UserData.AppId = "AlienResurrection";
 
+SyncBundledMods();
+
 // The window/GL context and audio context are thread-affine, and gameplay's recompiled call chains
 // need a deep stack (RecompOne translates every MIPS call into a real C# call) -- the same reason
 // GameTemplate/Program.cs runs the game on a dedicated 64MB-stack thread. Running the ENTIRE
@@ -311,4 +313,35 @@ int RunLauncher()
     var mem = new PSMemory();
     runMethod.Invoke(null, [mem, discPath]);
     return 0;
+}
+
+// The bundled mods (bundled-mods/ in the repo, copied to <app>/mods/ by the build) must end up where
+// the ENGINE looks: ModLoader.LoadAll() reads Path.GetFullPath("mods"), i.e. relative to the CURRENT
+// DIRECTORY, and writes its compile cache there, so it must be writable. That is the app folder only
+// when the zip build is started from its own folder. The AppImage's AppRun does not cd anywhere, and
+// its own files sit on a read-only mount, so without this the Mods page would save settings that
+// nothing reads. Copies new or changed files only, and never deletes anything a user put in mods/.
+static void SyncBundledMods()
+{
+    try
+    {
+        var src = Path.Combine(AppContext.BaseDirectory, "mods");
+        var dst = Path.GetFullPath("mods");
+        if (!Directory.Exists(src)) return;
+        if (string.Equals(Path.GetFullPath(src).TrimEnd('/'), dst.TrimEnd('/'), StringComparison.Ordinal)) return;
+        foreach (var file in Directory.EnumerateFiles(src, "*", SearchOption.AllDirectories))
+        {
+            var rel = Path.GetRelativePath(src, file);
+            if (rel.StartsWith(".cache", StringComparison.Ordinal)) continue;
+            var target = Path.Combine(dst, rel);
+            if (File.Exists(target) && File.ReadAllBytes(target).AsSpan().SequenceEqual(File.ReadAllBytes(file))) continue;
+            Directory.CreateDirectory(Path.GetDirectoryName(target)!);
+            File.Copy(file, target, overwrite: true);
+            Console.WriteLine($"[mods] installed bundled {rel}");
+        }
+    }
+    catch (Exception e)
+    {
+        Console.Error.WriteLine($"[mods] could not install the bundled mods: {e.Message}");
+    }
 }
