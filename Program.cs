@@ -174,9 +174,13 @@ int RunLauncher()
     if (!cacheHit)
     {
         Console.WriteLine("[launcher] no valid cache -- recompiling and building");
-        RecompOne.Runtime.Runtime.ShowNotice(
-            "Recompiling and building the game from your disc. This can take a little while -- " +
-            "the window will stay open and responsive, please wait.");
+
+        // A full-screen stage display with the front screen's motion tracker, instead of a notice
+        // popup over an empty window: the work below reports no progress of its own, so the honest
+        // things to show are which phase is running and that the process is still alive. See
+        // BuildScreen for why there is deliberately no percentage.
+        var buildScreen = new AlienResurrectionLauncher.BuildScreen { IsOpen = true };
+        RecompOne.Runtime.Host.Window.PanelManager.Register(buildScreen);
 
         // The recompile+build below is genuinely slow (a few seconds to tens of seconds) and has no
         // natural "pump the window" points of its own. Run it on a background thread and keep
@@ -202,6 +206,7 @@ int RunLauncher()
                     OverlayWriter.Write(config, fs, recompiledDir);
 
                 // ---- Step 6: build in-process via Roslyn ---------------------------------------
+                buildScreen.Current = AlienResurrectionLauncher.BuildScreen.Stage.Building;
                 var sourceFiles = Directory.GetFiles(recompiledDir, "*.cs");
 
                 var parseOptions = CSharpParseOptions.Default.WithLanguageVersion(LanguageVersion.Latest);
@@ -274,6 +279,7 @@ int RunLauncher()
             RecompOne.Runtime.Runtime.Pump();
             Thread.Sleep(16);
         }
+        buildScreen.IsOpen = false;
 
         if (buildError != null)
         {
