@@ -14,7 +14,13 @@ Usage:
 
 Requires the RecompOne-fork engine checked out as a sibling directory (../RecompOne-fork), same as
 a normal build -- see the RecompOneDir override in AlienResurrectionLauncher.csproj if yours lives
-elsewhere. Also requires `appimagetool` on PATH (e.g. `paru -S appimagetool-bin` on Arch).
+elsewhere. Also requires `appimagetool` on PATH (e.g. `paru -S appimagetool-bin` on Arch), and
+`zsyncmake` (the `zsync` package) for the update information below.
+
+Update information: the AppImage embeds UPDATE_INFO, which tells AppImageUpdate and similar tools
+to look for newer builds in this repo's latest GitHub release. appimagetool writes a matching
+`<AppImage>.zsync` next to the AppImage, and BOTH files must be uploaded to every release -- the
+.zsync is what the updater downloads to work out which parts of the file changed.
 """
 import re
 import shutil
@@ -31,6 +37,10 @@ DIST_DIR = ROOT / "dist"
 APPDIR = ROOT / "publish" / "AppDir"
 APPIMAGE_ASSETS = ROOT / "appimage"
 APP_NAME = "AlienResurrectionRecompilation"
+UPDATE_INFO = (
+    "gh-releases-zsync|Heromachine|AlienResurrection-Recompilation|latest"
+    f"|{APP_NAME}-*-x86_64.AppImage.zsync"
+)
 
 
 def read_version() -> str:
@@ -109,14 +119,25 @@ def build_appimage(version: str) -> Path:
 
     DIST_DIR.mkdir(exist_ok=True)
     appimage_path = DIST_DIR / f"{APP_NAME}-v{version}-x86_64.AppImage"
-    if appimage_path.exists():
-        appimage_path.unlink()
+    zsync_path = appimage_path.with_name(appimage_path.name + ".zsync")
+    for stale in (appimage_path, zsync_path):
+        if stale.exists():
+            stale.unlink()
 
-    cmd = ["appimagetool", str(APPDIR), str(appimage_path)]
+    # appimagetool only warns and carries on when zsyncmake is missing, which would ship an
+    # AppImage that points at a .zsync nobody can download. Fail before building instead.
+    if shutil.which("zsyncmake") is None:
+        sys.exit("error: zsyncmake not found on PATH (install the `zsync` package)")
+
+    cmd = ["appimagetool", "-u", UPDATE_INFO, str(APPDIR), str(appimage_path)]
     print(f"[publish_release] {' '.join(cmd)}")
     subprocess.run(cmd, check=True, cwd=ROOT)
 
+    if not zsync_path.exists():
+        sys.exit(f"error: appimagetool did not write {zsync_path}")
+
     print(f"[publish_release] wrote {appimage_path} ({appimage_path.stat().st_size:,} bytes)")
+    print(f"[publish_release] wrote {zsync_path} -- upload it to the release with the AppImage")
     return appimage_path
 
 
